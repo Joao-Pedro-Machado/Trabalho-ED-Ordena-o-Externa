@@ -101,6 +101,8 @@ void mergeSort(pacote *vetor, int inicio, int fim)
     }
 }
 
+
+
 void lerPrimeiroArquivo(ifstream &arquivo)
 {
     pacote umPacote;
@@ -137,10 +139,23 @@ void lerPrimeiroArquivo(ifstream &arquivo)
 }
 
 void salvaVetor(pacote *vetor, ofstream &file, int tamanho){
-    for(int i = 0; i < tamanho; i++) {
-        file.write((const char *) &vetor[i], sizeof(pacote));
+    pacote umPacote;
+    for(int i = 0; i < tamanho; i++){
+        umPacote = vetor[i];
+        file.write((const char *) &umPacote, sizeof(pacote));
     }
 }
+
+int lerArquivo(string fileName){
+    ifstream arquivo(fileName, ios::binary);
+    pacote umPacote;
+    int count = 0;
+    while(arquivo.read((char *) &umPacote, sizeof(umPacote))){
+        count++;
+    }
+
+    return count;
+};
 
 void criarArquivoSeparado(ifstream &arquivo)
 {
@@ -153,8 +168,8 @@ void criarArquivoSeparado(ifstream &arquivo)
     pacote vetor[tamanho];
     int i = 0;
 
-    while (arquivo.read((char *)&umPacote, sizeof(umPacote)))
-    {
+
+    while (arquivo.read((char *) &umPacote, sizeof(pacote))){
         if (contadorDeBlocos == 1000)
         {
             contadorDeBlocos = 0;
@@ -165,6 +180,7 @@ void criarArquivoSeparado(ifstream &arquivo)
                 salvaVetor(vetor, MyFile2, tamanho);
             }
             count++;
+            i = 0;
         } else {
             vetor[i] = umPacote;
             i++;
@@ -182,6 +198,9 @@ void criarArquivoSeparado(ifstream &arquivo)
             MyFile2 << umPacote.indice << umPacote.tempo << umPacote.origem << umPacote.destino << umPacote.protocolo << umPacote.tamanho << umPacote.informacao << endl;
         }*/
 
+    cout << "arquivo f1: " << lerArquivo("f1.bin") << endl;
+    cout << "arquivo f2: " << lerArquivo("f2.bin") << endl;
+
     MyFile.close();
     MyFile2.close();
 }
@@ -189,8 +208,6 @@ void criarArquivoSeparado(ifstream &arquivo)
 int main()
 {
     ifstream arquivo_bin_read("captura_pacotes.bin", ios::binary);
-    ifstream arquivo_Txt("filename.txt", ios::binary);
-    ifstream arquivo_Txt1("teste1.txt", ios::binary);
 
     // le_arquivo_bin(arquivo_Txt);
     criarArquivoSeparado(arquivo_bin_read);
