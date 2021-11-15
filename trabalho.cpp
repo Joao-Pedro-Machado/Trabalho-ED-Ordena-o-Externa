@@ -84,6 +84,11 @@ void mergeSort(pacote *vetor, int inicio, int fim)
 }
 
 void salvaVetor(pacote *vetor, ofstream &file, int tamanho){
+
+    /*
+        Salva um vetor em um arquivo
+    */
+
     pacote umPacote;
     for(int i = 0; i < tamanho; i++){
         umPacote = vetor[i];
@@ -92,6 +97,10 @@ void salvaVetor(pacote *vetor, ofstream &file, int tamanho){
 }
 
 int lerArquivo(string fileName){
+    /*
+        Realiza a contagem de elementos nos arquivos
+    */
+
     ifstream arquivo(fileName, ios::binary);
     pacote umPacote;
     int count = 0;
@@ -104,6 +113,10 @@ int lerArquivo(string fileName){
 };
 
 void criarArquivoSeparado(ifstream &arquivo){
+    /*
+        Realiza a leitura do arquivo base e divide em 2 arquivo com os dados parcialmente ordenados
+    */
+
     pacote umPacote;
     ofstream MyFile("f1.bin", ios::binary);
     ofstream MyFile2("f2.bin", ios::binary);
@@ -158,6 +171,11 @@ void intercalaArquivos(string entrada1Name, string entrada2Name, string saida1Na
     int contadorArquivo = 0;
     int i = 0;
 
+    /*
+    Enquanto for possível ler dados dos arquivo de entrada
+    Carrega-se os dados na memória (1000 pacotes por vez)
+    E depois realiza a intercalação para o arquivo de saída correspondente
+    */
     while(entrada1.read((char*) &aux1, sizeof(pacote)) and entrada2.read((char*) &aux2, sizeof(pacote))){
 
         if(contador <= tamanhoInicialBloco){
@@ -174,10 +192,18 @@ void intercalaArquivos(string entrada1Name, string entrada2Name, string saida1Na
 
             while((contadorGeral <= tamanhoAtualBloco) or (vetor1Finalizado) or (vetor2Finalizado)){
                 if(vetor1[contador1].indice < vetor2[contador2].indice){
-                    vetorFinal[contadorGeral] = vetor1[contador1];
+                    if(contadorArquivo % 2 == 0) {
+                        saida1.write((const char *) &vetor1[contador1], sizeof(pacote));
+                    } else {
+                        saida2.write((const char *) &vetor1[contador1], sizeof(pacote));
+                    }
                     contador1++;
                 } else {
-                    vetorFinal[contadorGeral] = vetor2[contador2];
+                    if(contadorArquivo % 2 == 0) {
+                        saida1.write((const char *) &vetor2[contador2], sizeof(pacote));
+                    } else {
+                        saida2.write((const char *) &vetor2[contador2], sizeof(pacote));
+                    }
                     contador2++;
                 }
 
@@ -187,42 +213,83 @@ void intercalaArquivos(string entrada1Name, string entrada2Name, string saida1Na
                     vetor2Finalizado = true;
                 }
 
+                
                 contadorGeral++;
             }
 
             if (vetor1Finalizado) {
                 while(contador2 <= tamanhoInicialBloco){
-                    vetorFinal[contadorGeral] = vetor2[contador2];
+                    if(contadorArquivo % 2 == 0) {
+                        saida1.write((const char *) &vetor2[contador2], sizeof(pacote));
+                    } else {
+                        saida2.write((const char *) &vetor2[contador2], sizeof(pacote));
+                    }
                     contador2++;
                     contadorGeral++;
                 }
             } else if (vetor2Finalizado) {
                 while(contador1 <= tamanhoInicialBloco){
-                    vetorFinal[contadorGeral] = vetor1[contador1];
+                    if(contadorArquivo % 2 == 0) {
+                        saida1.write((const char *) &vetor1[contador1], sizeof(pacote));
+                    } else {
+                        saida2.write((const char *) &vetor1[contador1], sizeof(pacote));
+                    }
                     contador2++;
                     contadorGeral++;
                 }
             }
-
-            if(contadorArquivo % 2 == 0) {
-                salvaVetor(vetorFinal, saida1, tamanhoAtualBloco);
-            } else {
-                salvaVetor(vetorFinal, saida2, tamanhoAtualBloco);
-            }
-
+            
             contadorArquivo++;
             contador = 0;
             i = 0;
+
+            cout << contadorArquivo << endl;
         }
     }
 }
+
+void mergeExterno(){
+    string entrada1 = "f1.bin";
+    string entrada2 = "f2.bin";
+    string saida1 = "s1.bin";
+    string saida2 = "s2.bin";
+
+    int tamanhoInicial = 1000;
+
+    bool fim = false;
+
+
+    // Chama a intercalação
+    while(!fim){
+        if((lerArquivo(entrada1) == 0) and lerArquivo(entrada2) == 0){
+            intercalaArquivos(saida1, saida2, entrada1, entrada2, 1000);
+        } else {
+            intercalaArquivos(entrada1, entrada2, saida1, saida2, 1000);
+        }
+
+
+        // Verifica se um dos arquivo de entrada está cheio enquanto o outro está vazio indicando o fim do processo
+        if(lerArquivo(entrada1) == 0 and lerArquivo(entrada2) != 0){
+            fim = true;
+        } else if (lerArquivo(entrada2) == 0 and lerArquivo(entrada1) != 0){
+            fim = true;
+        } else if (lerArquivo(saida1) == 0 and lerArquivo(saida2) != 0) {
+            fim = true;
+        } else if (lerArquivo(saida2) == 0 and lerArquivo(saida1) != 0) {
+            fim = true;
+        }
+    }
+    
+    
+
+};
 
 int main(){
     ifstream arquivo_bin_read("captura_pacotes.bin", ios::binary);
 
     criarArquivoSeparado(arquivo_bin_read);
 
-    intercalaArquivos("f1.bin", "f2.bin", "s1.bin", "s2.bin", 1000);
+    mergeExterno();
 
     return 0;
 }
